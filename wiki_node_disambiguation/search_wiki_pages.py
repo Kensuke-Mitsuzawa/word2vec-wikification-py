@@ -31,33 +31,30 @@ def search_function_from_wikipedia_database(token: str,
         except:
             return None
 
+
+    # It searches article name with exact same name as token
     cursor = wikipedia_db_connector.cursor()  # type: cursors
-    redirect_page_query = """SELECT rd_from, rd_title FROM {} WHERE rd_title = %s AND rd_namespace = 0""".format(page_table_redirect)
-    cursor.execute(redirect_page_query, (token,))
-    redirect_results = [(page_id_title[0], page_id_title[1]) for page_id_title in cursor.fetchall()]
-    cursor.close()
-    # TODO 曖昧さ回避の処理が必要
-    # カテゴリテーブルを検索して、曖昧さカテゴリの下にないことを確認する
-
-
-    # 結果が0でなければ、tokenはwikipedia記事名である。
-    if len(redirect_results) != 0: return [token]
-
-    cursor = wikipedia_db_connector.cursor()  # type: cursors
-    page_query = """SELECT page_id, page_title FROM {} WHERE page_title = %s AND page_namespace = 0""".format(page_table_name)
-    cursor.execute(page_query, (token, ))
-    page_results = [page_id_title[0] for page_id_title in cursor.fetchall()]
-    cursor.close()
-    if len(page_results)==0: return []
-
-    cursor = wikipedia_db_connector.cursor()  # type: cursors
-    select_query = """SELECT rd_title FROM {} WHERE rd_from IN %s""".format(page_table_redirect)
-    cursor.execute(select_query, (page_results,))
-    redirect_names = [decode_string(page_id_title[0]) for page_id_title in cursor.fetchall()
-                      if not decode_string(page_id_title[0]) is None]
+    page_query = """SELECT page_id, page_title, page_is_redirect FROM {} WHERE (page_title = %s OR page_title LIKE %s) AND page_namespace = 0""".format(page_table_name)
+    cursor.execute(page_query, (token, '{}\_(%)'.format(token)))
+    fetched_records = list(cursor.fetchall())
+    page_names = [page_id_title[1] for page_id_title in fetched_records if page_id_title[2]==0]
+    redirect_names = [page_id_title[0] for page_id_title in fetched_records if page_id_title[2]==1]
     cursor.close()
 
-    return redirect_names
+    if not redirect_names == []:
+        cursor = wikipedia_db_connector.cursor()  # type: cursors
+        select_query = """SELECT rd_title FROM {} WHERE rd_from IN %s""".format(page_table_redirect)
+        cursor.execute(select_query, (redirect_names,))
+        article_page_names = [page_id_title[0] for page_id_title in cursor.fetchall()]
+        cursor.close()
+    else:
+        article_page_names = []
+
+    article_name_string = [decode_string(article_name) for article_name in page_names+article_page_names
+                           if not decode_string(article_name) is None]
+    print(article_name_string)
+
+    return article_name_string
 
 
 def search_from_dictionary(target_tokens:List[str],
