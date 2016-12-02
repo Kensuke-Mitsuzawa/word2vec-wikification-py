@@ -3,15 +3,63 @@ from gensim.models import Word2Vec
 from wiki_node_disambiguation.models import WikipediaArticleObject, LatticeObject, SequenceScore
 from wiki_node_disambiguation.make_lattice import make_lattice_object
 from wiki_node_disambiguation.load_entity_model import load_entity_model
+from wiki_node_disambiguation import search_wiki_pages, init_logger
 from typing import List, Tuple
+from functools import partial
 
 
-def inter_plausible_sequence():
-    """入力系列を形態素分割して、wiki nodeを特定して、ほんでもっともらしいwiki系列を求める
+def string_normalization_function(input_str:str)->str:
+    return input_str
+
+
+def add_article_symbol(input_str:str)->str:
+    return '[{}]'.format(input_str)
+
+
+def predict_japanese_wiki_names_with_wikidump(input_tokens:List[str],
+                                wikipedia_db_connector,
+                                entity_vector_model: Word2Vec,
+                                is_use_cache: bool = True,
+                                is_sort_object: bool = True,
+                                page_table_name: str = 'page',
+                                page_table_redirect: str = 'redirect',
+                                search_method:str='partial') -> List[SequenceScore]:
     """
-    # TODO 形態素分割 tokenizerは関数objectとして引数にすること
-    # computer_wiki_node_probability()を呼び出しする
-    pass
+    """
+    if search_method=='partial':
+        search_function = partial(search_wiki_pages.search_function_from_wikipedia_database,
+                                  wikipedia_db_connector=wikipedia_db_connector,
+                                  page_table_name=page_table_name,
+                                  page_table_redirect=page_table_redirect)
+
+        search_result = search_wiki_pages.search_from_dictionary(target_tokens=input_tokens,
+                                                                 string_normalization_function=string_normalization_function,
+                                                                 partially_param_given_function=search_function)
+        seq_wiki_article_name = [
+            WikipediaArticleObject(page_title=token_name, candidate_article_name=[add_article_symbol(string) for string in results])
+            for token_name, results in search_result.items() if not results == []]
+        return compute_wiki_node_probability(seq_wiki_article_name=seq_wiki_article_name,
+                                             entity_vector_model=entity_vector_model,
+                                             is_use_cache=is_use_cache,
+                                             is_sort_object=is_sort_object)
+    elif search_method == 'complete':
+        search_result = [
+            search_wiki_pages.search_function_from_wikipedia_database(
+                token=token,
+                wikipedia_db_connector=wikipedia_db_connector,
+                page_table_name=page_table_name,
+                page_table_redirect=page_table_redirect
+            ) for token in input_tokens]
+        seq_wiki_article_name = [
+            WikipediaArticleObject(page_title=token, candidate_article_name=[add_article_symbol(string) for string in results])
+            for token, results in zip(input_tokens, search_result) if not results == []]
+
+        return compute_wiki_node_probability(seq_wiki_article_name=seq_wiki_article_name,
+                                             entity_vector_model=entity_vector_model,
+                                             is_use_cache=is_use_cache,
+                                             is_sort_object=is_sort_object)
+    else:
+        raise Exception('There is no search method named {}'.format(search_method))
 
 
 def compute_wiki_node_probability(seq_wiki_article_name: List[WikipediaArticleObject],

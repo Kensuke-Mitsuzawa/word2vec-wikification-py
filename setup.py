@@ -11,7 +11,10 @@ url=''
 license_name=''
 
 install_requires = [
-    'gensim'
+    'gensim',
+    'JapaneseTokenizer',
+    'mysqlclient',
+    'pymysql'
 ]
 
 

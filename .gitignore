@@ -91,5 +91,6 @@ ENV/
 .ropeproject
 
 # appendix
-./bin/*
+bin/*
 .idea/
+configs/development.ini
