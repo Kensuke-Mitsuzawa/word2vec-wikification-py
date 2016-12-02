@@ -1,9 +1,9 @@
-from wiki_node_disambiguation import load_entity_model, make_lattice
+from wiki_node_disambiguation import load_entity_model, make_lattice, interface
 from wiki_node_disambiguation.models import WikipediaArticleObject, LatticeObject, IndexDictionaryObject
 import unittest
 import os
 
-class TestMakeLatice(unittest.TestCase):
+class TestInterface(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # procedures before tests are started. This code block is executed only once
@@ -31,40 +31,13 @@ class TestMakeLatice(unittest.TestCase):
         # procedures after every tests are finished. This code block is executed every time
         pass
 
-    def test_make_state_transition_matrix(self):
-        """状態tから状態t+1への遷移行列を作成するテスト
-        """
-        state2index_obj = IndexDictionaryObject(state2index={'row2index': {}, 'column2index': {}},
-                                                index2state={})
-
-        transition_edge = make_lattice.make_state_transition_edge(
-            state_t_word_tuple=(0,'[ヤマハ]'),
-            state_t_plus_word_tuple=(1, '[河合楽器製作所]'),
-            state2index_obj=state2index_obj,
-            entity_vector=self.model_object
-        )
-        self.assertTrue(isinstance(transition_edge, tuple))
-        self.assertEqual(transition_edge[0].transition_score, self.model_object.similarity('[ヤマハ]', '[河合楽器製作所]'))
-
-    def test_make_state_transition_sequence(self):
-        """
-        """
-        state2index_obj = IndexDictionaryObject(state2index={'row2index': {}, 'column2index': {}},
-                                                index2state={})
-
-        make_lattice.make_state_transition_sequence(
-            seq_wiki_article_name=self.seq_wikipedia_article_object,
-            entity_vector_model=self.model_object,
-            state2index_obj=state2index_obj,
-        )
-
-    def test_make_lattice_object(self):
-        lattice_object = make_lattice.make_lattice_object(
+    def test_compute_wiki_node_probability(self):
+        sequence_score_objects = interface.compute_wiki_node_probability(
             seq_wiki_article_name=self.seq_wikipedia_article_object,
             entity_vector_model=self.model_object,
             is_use_cache=True
         )
-        self.assertTrue(isinstance(lattice_object, LatticeObject))
+        print([seq_obj.__dict__() for seq_obj in sequence_score_objects])
 
 
 if __name__ == '__main__':

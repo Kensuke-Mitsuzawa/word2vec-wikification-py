@@ -1,5 +1,7 @@
 from typing import List, Tuple, Any, Union, Dict
 from numpy.core import ndarray
+from scipy.sparse import csr_matrix
+from itertools import product
 import pickle, json, csv, os, shutil
 
 # this class is from https://code.activestate.com/recipes/576642/
@@ -114,8 +116,8 @@ class SequenceScore(object):
 
     """
     def __init__(self,
-                 seq_words:Union[WikipediaArticleObject, List[str]],
-                 seq_transition_score:ndarray,
+                 seq_words:Union[List[WikipediaArticleObject], List[str]],
+                 seq_transition_score:List[Tuple[str, str, float]],
                  sequence_score:float):
         self.seq_words = seq_words
         self.seq_transition_score = seq_transition_score
@@ -137,11 +139,140 @@ class SequenceScore(object):
         )
 
 
+class EdgeObject(object):
+    __slots__ = ['index_at_t', 'index_at_t_plus']
+
+    def __init__(self, index_at_t:int, index_at_t_plus:int):
+        self.index_at_t = index_at_t
+        self.index_at_t_plus = index_at_t_plus
+
+    def to_tuple(self):
+        return (self.index_at_t, self.index_at_t_plus)
+
+
+class IndexDictionaryObject(object):
+    """Class object for keeping a relation of state_name and index.
+    state2index attribute must have 2 key names.
+    - row2index
+    - column2index
+
+    index2state attribute must have 2 key names.
+    - index2row
+    - index2column
+
+    """
+    __slots__ = ['state2index', 'index2state']
+
+    def __init__(self,
+                 state2index:Union[Dict[str, Dict], PersistentDict],
+                 index2state:Union[Dict[str, Dict], PersistentDict]):
+        self.state2index = state2index
+        self.index2state = index2state
+
+
 class LatticeObject(object):
     def __init__(self,
-                 transition_matrix:ndarray,
-                 index2column:Dict[int,Tuple[int,str]],
-                 index2row:Dict[int,Tuple[int,str]]):
+                 transition_matrix:Union[csr_matrix, ndarray],
+                 index_dictionary_obj:IndexDictionaryObject,
+                 seq_edge_groups:List[List[EdgeObject]],
+                 seq_wiki_article_name: List[WikipediaArticleObject]=None):
+        """*
+        """
         self.transition_matrix = transition_matrix
-        self.index2column = index2column
-        self.index2row = index2row
+        self.index_dictionary_obj = index_dictionary_obj
+        self.seq_edge_groups = seq_edge_groups
+        self.index_tuple_route = self.__generate_edge_routes()
+        self.seq_wiki_article_name = seq_wiki_article_name
+        if not seq_wiki_article_name is None:
+            self.label2WikiArticleObj = {wiki_article_name: wiki_article_obj
+                                         for wiki_article_obj in self.seq_wiki_article_name
+                                         for wiki_article_name in wiki_article_obj.candidate_article_name}
+        else:
+            self.label2WikiArticleObj = None
+
+
+    def __generate_edge_routes(self)->List[Tuple[Tuple[int,int]]]:
+        """* What you can do
+        - You can generate route over lattice graph.
+
+        * Output
+        - [( (row_index_matrix, column_index_matrix) )]
+        """
+        def judge_proper_route(index_tuple_route:Tuple[Tuple[int,int]])->bool:
+            """It picks up only sequence whose states meet condition state_t == state_t_plus_1
+            """
+            judge_flag = True
+            for edge_index in range(0, len(index_tuple_route)-1):
+                state_name_t_plus_at_now = self.index_dictionary_obj.index2state['index2column'][index_tuple_route[edge_index][1]]
+                state_name_t_at_next = self.index_dictionary_obj.index2state['index2row'][index_tuple_route[edge_index+1][0]]
+                if state_name_t_plus_at_now == state_name_t_at_next:
+                    pass
+                else:
+                    judge_flag = False
+
+            return judge_flag
+
+        index_tuple_of_edge = [[edge_obj.to_tuple() for edge_obj in list_edge_candidate]
+                               for list_edge_candidate in self.seq_edge_groups]
+        index_tuple_of_route_candidates = product(*index_tuple_of_edge)
+        # select only a route where state_t_plus == state_t_next
+        index_tuple_of_route = list(filter(judge_proper_route, index_tuple_of_route_candidates))
+        return index_tuple_of_route
+
+    def __get_score(self, row:int, column:int)->float:
+        return self.transition_matrix[row, column]
+
+    def __compute_route_score(self, index_tuple_route:Tuple[Tuple[int,int]])->float:
+        """* What you can do
+        - You get score of a route
+        """
+        seq_score = [self.__get_score(index_tuple[0], index_tuple[1]) for index_tuple in index_tuple_route]
+        return sum(seq_score)
+
+    def __generate_state_name_sequence(self, index_tuple_route:Tuple[Tuple[int,int]])->List[Tuple[str, str, float]]:
+        """* What you can do
+        - You get sequence of label & score tuple (label_t, label_t_plus_1, score)
+        """
+        seq_state_name_score = [
+            (self.index_dictionary_obj.index2state['index2row'][index_tuple[0]][1],
+             self.index_dictionary_obj.index2state['index2column'][index_tuple[1]][1],
+             self.__get_score(index_tuple[0], index_tuple[1]))
+            for index_tuple in index_tuple_route]
+        return seq_state_name_score
+
+    def __generate_label_sequence(self, seq_score_tuple:List[Tuple[str, str, float]])->List[str]:
+        """* What you can do
+        - You generate list of label
+        """
+        seq_label = []
+        for index in range(0, len(seq_score_tuple)):
+            if index == 0:
+                seq_label.append(seq_score_tuple[index][0])
+            elif index+1 == len(seq_score_tuple):
+                seq_label.append(seq_score_tuple[index][0])
+                seq_label.append(seq_score_tuple[index][1])
+            else:
+                seq_label.append(seq_score_tuple[index][0])
+
+        return seq_label
+
+    def get_score_routes(self)->List[SequenceScore]:
+        """
+        """
+        sequence_score_objects = []
+        for route in self.index_tuple_route:
+            route_score = self.__compute_route_score(route)
+            seq_score_tuple = self.__generate_state_name_sequence(route)
+            seq_label_name = self.__generate_label_sequence(seq_score_tuple=seq_score_tuple)
+
+            if not self.seq_wiki_article_name is None:
+                label_object = [self.label2WikiArticleObj[label] for label in seq_label_name]
+            else:
+                label_object = seq_label_name
+
+            sequence_score_objects.append(
+                SequenceScore(seq_words=label_object,
+                              seq_transition_score=seq_score_tuple,
+                              sequence_score=route_score)
+            )
+        return sequence_score_objects
