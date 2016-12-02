@@ -1,10 +1,13 @@
 from numpy import ndarray
 from gensim.models import Word2Vec
+from wiki_node_disambiguation import init_logger
 from wiki_node_disambiguation.models import WikipediaArticleObject, PersistentDict, LatticeObject, IndexDictionaryObject, EdgeObject
 from typing import List, Tuple, Union, Any, Dict
 from tempfile import mkdtemp
 from scipy.sparse import csr_matrix
 import os
+import logging
+logger = logging.getLogger(name=init_logger.LOGGER_NAME)
 
 
 class TransitionEdgeObject(object):
@@ -131,6 +134,24 @@ def make_state_transition_sequence(seq_wiki_article_name:List[WikipediaArticleOb
     return (state2index_obj, seq_edge_group, transition_matrix)
 
 
+def filter_out_of_vocabulary_word(wikipedia_article_obj: WikipediaArticleObject, vocabulary_words:set)->Union[bool, WikipediaArticleObject]:
+    """* What you can do
+    - You remove out-of-vocabulary word from wikipedia_article_obj.candidate_article_name
+    """
+    filtered_article_name = []
+    for article_name in wikipedia_article_obj.candidate_article_name:
+        if article_name in vocabulary_words:
+            filtered_article_name.append(article_name)
+        else:
+            logger.warning(msg='Out of vocabulary word. It removes. word = {}'.format(article_name))
+
+    if len(filtered_article_name)==0:
+        return False
+    else:
+        wikipedia_article_obj.candidate_article_name = filtered_article_name
+        return wikipedia_article_obj
+
+
 def make_lattice_object(seq_wiki_article_name:List[WikipediaArticleObject],
                         entity_vector_model:Word2Vec,
                         path_wordking_dir:str=None,
@@ -152,7 +173,11 @@ def make_lattice_object(seq_wiki_article_name:List[WikipediaArticleObject],
         state2index=persistent_state2index,
         index2state={})
 
-    # TODO vocaburaryに存在しない単語の排除
+    vocabulary_words = set(entity_vector_model.vocab.keys())
+    seq_wiki_article_name = [
+        wiki_article_name
+        for wiki_article_name in seq_wiki_article_name
+        if not filter_out_of_vocabulary_word(wiki_article_name, vocabulary_words) is False]
 
     updated_state2dict_obj, seq_edge_group, transition_matrix = make_state_transition_sequence(
         seq_wiki_article_name=seq_wiki_article_name,
