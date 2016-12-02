@@ -7,6 +7,10 @@ wiki_node_disambiguation
     - According to wikipedia, [Wikification](https://en.wikipedia.org/wiki/Wikification) is `in computer science, entity linking with Wikipedia as the target knowledge base`
 - You can get disambiguated result with its score.
 
+Please visit [Github page](https://github.com/Kensuke-Mitsuzawa/word2vec_wikification_py) also.
+If you find any bugs and you report it to github issue, I'm glad.
+Any pull-requests are welcomed.
+
 
 # Requirement
 
@@ -16,6 +20,11 @@ wiki_node_disambiguation
 # Setup
 
 `python setup.py install`
+
+## Get wikipedia entity vector model
+
+Go to [this page](http://www.cl.ecei.tohoku.ac.jp/~m-suzuki/jawiki_vector/) and download model file from [here](http://www.cl.ecei.tohoku.ac.jp/~m-suzuki/jawiki_vector/entity_vector.tar.bz2).
+Or run `download_model.sh`
 
 ## To those who uses interface.predict_japanese_wiki_names()
 
