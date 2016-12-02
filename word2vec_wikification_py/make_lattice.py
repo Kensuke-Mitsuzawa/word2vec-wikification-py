@@ -1,7 +1,7 @@
 from numpy import ndarray
 from gensim.models import Word2Vec
-from wiki_node_disambiguation import init_logger
-from wiki_node_disambiguation.models import WikipediaArticleObject, PersistentDict, LatticeObject, IndexDictionaryObject, EdgeObject
+from word2vec_wikification_py import init_logger
+from word2vec_wikification_py.models import WikipediaArticleObject, PersistentDict, LatticeObject, IndexDictionaryObject, EdgeObject
 from typing import List, Tuple, Union, Any, Dict
 from tempfile import mkdtemp
 from scipy.sparse import csr_matrix

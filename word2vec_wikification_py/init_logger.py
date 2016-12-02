@@ -1,4 +1,4 @@
-LOGGER_NAME = 'wiki_node_disambiguation'
+LOGGER_NAME = 'word2vec_wikification_py'
 
 import logging
 import os

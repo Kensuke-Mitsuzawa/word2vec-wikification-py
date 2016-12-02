@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from gensim.models import Word2Vec
-from wiki_node_disambiguation.models import WikipediaArticleObject, LatticeObject, SequenceScore
-from wiki_node_disambiguation.make_lattice import make_lattice_object
-from wiki_node_disambiguation.load_entity_model import load_entity_model
-from wiki_node_disambiguation import search_wiki_pages, init_logger
-from typing import List, Tuple
+from word2vec_wikification_py.models import WikipediaArticleObject, LatticeObject, SequenceScore
+from word2vec_wikification_py.make_lattice import make_lattice_object
+from word2vec_wikification_py.load_entity_model import load_entity_model
+from word2vec_wikification_py import search_wiki_pages
+from typing import List
 from functools import partial
 
 
@@ -16,15 +16,28 @@ def add_article_symbol(input_str:str)->str:
     return '[{}]'.format(input_str)
 
 
-def predict_japanese_wiki_names_with_wikidump(input_tokens:List[str],
-                                wikipedia_db_connector,
-                                entity_vector_model: Word2Vec,
-                                is_use_cache: bool = True,
-                                is_sort_object: bool = True,
-                                page_table_name: str = 'page',
-                                page_table_redirect: str = 'redirect',
-                                search_method:str='partial') -> List[SequenceScore]:
-    """
+def predict_japanese_wiki_names_with_wikidump(input_tokens: List[str],
+                                              wikipedia_db_connector,
+                                              entity_vector_model: Word2Vec,
+                                              is_use_cache: bool = True,
+                                              is_sort_object: bool = True,
+                                              page_table_name: str = 'page',
+                                              page_table_redirect: str = 'redirect',
+                                              search_method: str = 'complete') -> List[SequenceScore]:
+    """* What you can do
+    - You can run "Wikification" over your tokenized text
+
+    * Params
+    - input_tokens: list of tokens
+    - wikipedia_db_connector: mysql connector into wikipedia-dump database
+    - entity_vector_model: wikipedia entity vector of word2vec model
+    - is_use_cache: a boolean flag for keeping huge-object on disk
+    - is_sort_object: a boolean flag for sorting SequenceScore object
+    - page_table_name: the name of "page" table of wikipedia-dump database
+    - page_table_redirect: the name of "redirect" table of wikipedia-dump database
+    - search_method: a way to find candidates of wikipedia article name.
+        - partial: It tries to find wikipedia article name by concatenating tokens
+        - complete: It trusts the result of tokenizer.
     """
     if search_method=='partial':
         search_function = partial(search_wiki_pages.search_function_from_wikipedia_database,

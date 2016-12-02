@@ -3,10 +3,15 @@ wiki_node_disambiguation
 
 # What's this ?
 
+- You can run "Wikification" as easy as possible.
+    - According to wikipedia, [Wikification](https://en.wikipedia.org/wiki/Wikification) is `in computer science, entity linking with Wikipedia as the target knowledge base`
+- You can get disambiguated result with its score.
+
 
 # Requirement
 
 - Python3.x (checked under )
+    - I recommend to use "Anaconda" distribution.
 
 # Setup
 
@@ -41,3 +46,4 @@ To initialize wikipedia database with mysql,
 
 - version0.1
     - released
+    - It supports only Japanese wikipedia

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from gensim.models import Word2Vec
-from wiki_node_disambiguation import init_logger
-from wiki_node_disambiguation.models import PersistentDict
+from word2vec_wikification_py import init_logger
+from word2vec_wikification_py.models import PersistentDict
 from tempfile import mkdtemp
 import os
 

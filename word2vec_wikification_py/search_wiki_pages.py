@@ -50,9 +50,8 @@ def search_function_from_wikipedia_database(token: str,
     else:
         article_page_names = []
 
-    article_name_string = [decode_string(article_name) for article_name in page_names+article_page_names
-                           if not decode_string(article_name) is None]
-    print(article_name_string)
+    article_name_string = list(set([decode_string(article_name) for article_name in page_names+article_page_names
+                           if not decode_string(article_name) is None]))
 
     return article_name_string
 

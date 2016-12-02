@@ -116,7 +116,7 @@ class SequenceScore(object):
 
     """
     def __init__(self,
-                 seq_words:Union[List[WikipediaArticleObject], List[str]],
+                 seq_words:List[WikipediaArticleObject],
                  seq_transition_score:List[Tuple[str, str, float]],
                  sequence_score:float):
         self.seq_words = seq_words
@@ -125,15 +125,40 @@ class SequenceScore(object):
 
     def __dict__(self):
         return {
-            'seq_words': self.seq_words,
+            'seq_words': [wikipedia_obj.__dict__() for wikipedia_obj in self.seq_words],
             'seq_transition_score': self.seq_transition_score,
             'sequence_score': self.sequence_score
         }
 
+    def __str__(self):
+        return """SequenceScore object with score={}""".format(self.sequence_score)
+
+    def __generate_label_sequence(self, seq_score_tuple:List[Tuple[str, str, float]])->List[str]:
+        """* What you can do
+        - You generate list of label
+        """
+        seq_label = []
+        for index in range(0, len(seq_score_tuple)):
+            if index == 0:
+                seq_label.append(seq_score_tuple[index][0])
+            elif index+1 == len(seq_score_tuple):
+                seq_label.append(seq_score_tuple[index][0])
+                seq_label.append(seq_score_tuple[index][1])
+            else:
+                seq_label.append(seq_score_tuple[index][0])
+
+        return seq_label
+
+    def get_tokens(self)->List[str]:
+        return self.__generate_label_sequence(seq_score_tuple=self.seq_transition_score)
+
     @classmethod
     def from_dict(cls, dict_object:Dict[str,Any]):
+        seq_words = [
+            WikipediaArticleObject.from_dict(wikipedia_dict_obj)
+            for wikipedia_dict_obj in dict_object['seq_words']]
         return SequenceScore(
-            seq_words=dict_object['seq_words'],
+            seq_words=seq_words,
             seq_transition_score=dict_object['seq_transition_score'],
             sequence_score=dict_object['sequence_score']
         )
@@ -256,6 +281,15 @@ class LatticeObject(object):
 
         return seq_label
 
+    def __generate_wiki_article_object_sequence(self, seq_label_name:List[str])->List[WikipediaArticleObject]:
+        seq_wiki_article_obj = []
+        for label in seq_label_name:
+            wiki_article_obj = self.label2WikiArticleObj[label]
+            wiki_article_obj.article_name = label
+            seq_wiki_article_obj.append(wiki_article_obj)
+        return seq_wiki_article_obj
+
+
     def get_score_routes(self)->List[SequenceScore]:
         """
         """
@@ -266,7 +300,7 @@ class LatticeObject(object):
             seq_label_name = self.__generate_label_sequence(seq_score_tuple=seq_score_tuple)
 
             if not self.seq_wiki_article_name is None:
-                label_object = [self.label2WikiArticleObj[label] for label in seq_label_name]
+                label_object = self.__generate_wiki_article_object_sequence(seq_label_name)
             else:
                 label_object = seq_label_name
 

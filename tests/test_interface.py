@@ -1,5 +1,5 @@
-from wiki_node_disambiguation import load_entity_model, make_lattice, interface, initialize_mysql_connector
-from wiki_node_disambiguation.models import WikipediaArticleObject, SequenceScore, LatticeObject, IndexDictionaryObject
+from word2vec_wikification_py import load_entity_model, make_lattice, interface, initialize_mysql_connector
+from word2vec_wikification_py.models import WikipediaArticleObject, SequenceScore, LatticeObject, IndexDictionaryObject
 import configparser
 import unittest
 import os
@@ -34,7 +34,7 @@ class TestInterface(unittest.TestCase):
         # procedures after every tests are finished. This code block is executed every time
         pass
 
-    """
+
     def test_compute_wiki_node_probability_test1(self):
         seq_wikipedia_article_object = [
             WikipediaArticleObject(page_title='ヤマハ', candidate_article_name=['[ヤマハ]', '[ヤマハ発動機]']),
@@ -70,7 +70,7 @@ class TestInterface(unittest.TestCase):
         for seq_obj in sequence_score_objects:
             self.assertTrue(isinstance(seq_obj, SequenceScore))
             import pprint
-            pprint.pprint(seq_obj.__dict__())"""
+            pprint.pprint(seq_obj.__dict__())
 
     def test_predict_japanese_wiki_names_partial(self):
         connector = initialize_mysql_connector.initialize_pymysql_connector(

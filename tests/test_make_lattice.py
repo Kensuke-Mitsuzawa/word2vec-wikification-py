@@ -1,5 +1,5 @@
-from wiki_node_disambiguation import load_entity_model, make_lattice
-from wiki_node_disambiguation.models import WikipediaArticleObject, LatticeObject, IndexDictionaryObject
+from word2vec_wikification_py import load_entity_model, make_lattice
+from word2vec_wikification_py.models import WikipediaArticleObject, LatticeObject, IndexDictionaryObject
 import unittest
 import os
 

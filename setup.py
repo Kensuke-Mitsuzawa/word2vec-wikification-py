@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-name='wiki_node_disambiguation'
+name='word2vec_wikification_py'
 version='0.1'
 description=''
 author='Kensuke Mitsuzawa'

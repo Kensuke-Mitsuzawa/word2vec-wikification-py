@@ -1,4 +1,4 @@
-from wiki_node_disambiguation import load_entity_model
+from word2vec_wikification_py import load_entity_model
 import unittest
 import os
 
