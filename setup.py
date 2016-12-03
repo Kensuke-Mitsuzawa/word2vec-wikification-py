@@ -13,14 +13,15 @@ license_name='MIT'
 install_requires = [
     'gensim',
     'mysqlclient',
-    'pymysql'
+    'pymysql',
+    'typing'
 ]
 
 
 dependency_links = [
 ]
 
-short_description = '`JapaneseTokenizer` is a package for easy Japanese Tokenization'
+short_description = ''
 
 try:
     import pypandoc

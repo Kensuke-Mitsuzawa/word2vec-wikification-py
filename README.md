@@ -40,13 +40,16 @@ The step until using it.
 To download wikipedia dump files, execute following commands
 
 ```
-wget https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-redirect.sql
-wget https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-page.sql
+wget https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-redirect.sql.gz
+wget https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-page.sql.gz
+gunzip jawiki-latest-redirect.sql.gz
+gunzip jawiki-latest-page.sql.gz
 ```
 
 To initialize wikipedia database with mysql,
 
 ```
+% CREATE DATABASE wikipedia;
 % mysql -u [user_name] -p[password] wikipedia < jawiki-latest-redirect.sql
 % mysql -u [user_name] -p[password] wikipedia < jawiki-latest-page.sql
 ```

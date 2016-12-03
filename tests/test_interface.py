@@ -14,8 +14,11 @@ class TestInterface(unittest.TestCase):
         cls.model_object = load_entity_model.load_entity_model(path_entity_model=cls.path_model_file, is_use_cache=True)
 
         cls.path_config_file = '../configs/development.ini'
-        if not os.path.exists(cls.path_model_file):
+        if not os.path.exists(cls.path_config_file):
             cls.path_config_file = cls.path_config_file.replace('../', '')
+
+        if not os.path.exists(cls.path_config_file):
+            raise FileExistsError()
 
         cls.config_obj = configparser.ConfigParser(allow_no_value=True)
         cls.config_obj.read(cls.path_config_file)

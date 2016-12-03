@@ -94,3 +94,7 @@ ENV/
 bin/*
 .idea/
 configs/development.ini
+*~
+.DS_Store
+tests/resources/jawiki-latest-page.sql
+tests/resources/jawiki-latest-redirect.sql
