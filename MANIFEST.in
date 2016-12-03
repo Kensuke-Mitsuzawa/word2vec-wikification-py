@@ -2,4 +2,4 @@ include README.md
 include LICENSE
 recursive-include examples *
 recursive-include tests *
-recursive-include DocumentFeatureSelection *
+recursive-include word2vec_wikification_py *

@@ -3,8 +3,8 @@
 from setuptools import setup, find_packages
 
 name='word2vec_wikification_py'
-version='0.1'
-description=''
+version='0.11'
+description='A package to run wikification'
 author='Kensuke Mitsuzawa'
 author_email='kensuke.mit@gmail.com'
 url='https://github.com/Kensuke-Mitsuzawa/word2vec_wikification_py'
@@ -41,6 +41,7 @@ setup(
     name=name,
     version=version,
     description=description,
+    long_description=long_description,
     author=author,
     install_requires=install_requires,
     dependency_links=dependency_links,
