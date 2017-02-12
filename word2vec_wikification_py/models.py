@@ -3,6 +3,7 @@ from numpy.core import ndarray
 from scipy.sparse import csr_matrix
 from itertools import product
 import pickle, json, csv, os, shutil
+import copy
 
 # this class is from https://code.activestate.com/recipes/576642/
 class PersistentDict(dict):
@@ -282,19 +283,25 @@ class LatticeObject(object):
         return seq_label
 
     def __generate_wiki_article_object_sequence(self, seq_label_name:List[str])->List[WikipediaArticleObject]:
-        seq_wiki_article_obj = []
-        for label in seq_label_name:
-            wiki_article_obj = self.label2WikiArticleObj[label]
+        """* What you can do
+        - You generate list of WikipediaArticleObject. They are already disambiguated.
+        """
+        seq_wiki_article_obj = [None] * len(seq_label_name)
+        for l_index, label in enumerate(seq_label_name):
+            wiki_article_obj = copy.deepcopy(self.label2WikiArticleObj[label])
             wiki_article_obj.article_name = label
-            seq_wiki_article_obj.append(wiki_article_obj)
-        return seq_wiki_article_obj
+            seq_wiki_article_obj[l_index] = wiki_article_obj
 
+        return list(filter(lambda element: True if not element is None else False, seq_wiki_article_obj))
 
     def get_score_routes(self)->List[SequenceScore]:
+        """* What you can do
+        - You generate list of SequenceScore.
+            - Each SequenceScore has information of one-route and its score.
         """
-        """
-        sequence_score_objects = []
-        for route in self.index_tuple_route:
+        ### make list beforehand to make this process faster ###
+        sequence_score_objects = [None] * len(self.index_tuple_route)
+        for l_index, route in enumerate(self.index_tuple_route):
             route_score = self.__compute_route_score(route)
             seq_score_tuple = self.__generate_state_name_sequence(route)
             seq_label_name = self.__generate_label_sequence(seq_score_tuple=seq_score_tuple)
@@ -304,9 +311,9 @@ class LatticeObject(object):
             else:
                 label_object = seq_label_name
 
-            sequence_score_objects.append(
-                SequenceScore(seq_words=label_object,
+            sequence_score_objects[l_index] = SequenceScore(seq_words=label_object,
                               seq_transition_score=seq_score_tuple,
                               sequence_score=route_score)
-            )
-        return sequence_score_objects
+
+        seq_result_score_object = list(filter(lambda element_obj: True if not element_obj is None else False, sequence_score_objects))
+        return seq_result_score_object
