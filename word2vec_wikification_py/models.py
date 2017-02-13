@@ -295,7 +295,7 @@ class LatticeObject(object):
         """
         seq_wiki_article_obj = [None] * len(seq_label_name)
         for l_index, label in enumerate(seq_label_name):
-            seq_tuple_index_wikiobj = self.label2WikiArticleObj[label]
+            seq_tuple_index_wikiobj = copy.deepcopy(self.label2WikiArticleObj[label])
             wiki_article_obj_in_index = [tuple_index_wikiobj for tuple_index_wikiobj in seq_tuple_index_wikiobj if tuple_index_wikiobj[0]==l_index][0][1]  # type: WikipediaArticleObject
             wiki_article_obj_in_index.article_name = label
             seq_wiki_article_obj[l_index] = wiki_article_obj_in_index
