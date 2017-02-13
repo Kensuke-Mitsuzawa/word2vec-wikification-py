@@ -4,6 +4,7 @@ from scipy.sparse import csr_matrix
 from itertools import product
 import pickle, json, csv, os, shutil
 import copy
+import itertools
 
 # this class is from https://code.activestate.com/recipes/576642/
 class PersistentDict(dict):
@@ -210,9 +211,15 @@ class LatticeObject(object):
         self.index_tuple_route = self.__generate_edge_routes()
         self.seq_wiki_article_name = seq_wiki_article_name
         if not seq_wiki_article_name is None:
-            self.label2WikiArticleObj = {wiki_article_name: wiki_article_obj
-                                         for wiki_article_obj in self.seq_wiki_article_name
-                                         for wiki_article_name in wiki_article_obj.candidate_article_name}
+            ## It constructs dict of wiki-article-name <-> (index-in-list, wiki-article-object) ##
+            function_key = lambda tuple_wikilabel_wikiobj: tuple_wikilabel_wikiobj[0]
+            seq_tuple_wikilabel_wikiobj = [(wiki_article_name, wiki_obj_index, wiki_article_obj)
+                                           for wiki_obj_index, wiki_article_obj in enumerate(self.seq_wiki_article_name)
+                                           for wiki_article_name in wiki_article_obj.candidate_article_name]
+            self.label2WikiArticleObj = {}  # type: Dict[str,List[Tuple[int, WikipediaArticleObject]]]
+            for wiki_label_name, g_obj in itertools.groupby(sorted(seq_tuple_wikilabel_wikiobj, key=function_key), key=function_key):
+                self.label2WikiArticleObj[wiki_label_name] = [(tuple_wikilabel_wiki_obj[1], tuple_wikilabel_wiki_obj[2])
+                                                              for tuple_wikilabel_wiki_obj in g_obj]
         else:
             self.label2WikiArticleObj = None
 
@@ -288,9 +295,10 @@ class LatticeObject(object):
         """
         seq_wiki_article_obj = [None] * len(seq_label_name)
         for l_index, label in enumerate(seq_label_name):
-            wiki_article_obj = copy.deepcopy(self.label2WikiArticleObj[label])
-            wiki_article_obj.article_name = label
-            seq_wiki_article_obj[l_index] = wiki_article_obj
+            seq_tuple_index_wikiobj = self.label2WikiArticleObj[label]
+            wiki_article_obj_in_index = [tuple_index_wikiobj for tuple_index_wikiobj in seq_tuple_index_wikiobj if tuple_index_wikiobj[0]==l_index][0][1]  # type: WikipediaArticleObject
+            wiki_article_obj_in_index.article_name = label
+            seq_wiki_article_obj[l_index] = wiki_article_obj_in_index
 
         return list(filter(lambda element: True if not element is None else False, seq_wiki_article_obj))
 
