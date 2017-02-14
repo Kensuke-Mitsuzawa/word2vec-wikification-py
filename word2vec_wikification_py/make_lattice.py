@@ -2,7 +2,7 @@ from numpy import ndarray
 from gensim.models import Word2Vec
 from word2vec_wikification_py import init_logger
 from word2vec_wikification_py.models import WikipediaArticleObject, PersistentDict, LatticeObject, IndexDictionaryObject, EdgeObject
-from typing import List, Tuple, Union, Any, Dict
+from typing import List, Tuple, Union, Any, Dict, Set
 from tempfile import mkdtemp
 from scipy.sparse import csr_matrix
 import os
@@ -48,9 +48,9 @@ def make_state_transition_edge(state_t_word_tuple:Tuple[int,str],
     - tuple object whose element is (transition_element, row2index, column2index)
     - transition_element is (row_index, column_index, transition_score)
     """
-    if not state_t_word_tuple[1] in entity_vector.vocab:
+    if not state_t_word_tuple[1] in entity_vector.wv.vocab:
         raise Exception('Element does not exist in entity_voctor model. element={}'.format(state_t_word_tuple))
-    if not state_t_plus_word_tuple[1] in entity_vector.vocab:
+    if not state_t_plus_word_tuple[1] in entity_vector.wv.vocab:
         raise Exception('Element does not exist in entity_voctor model. element={}'.format(state_t_plus_word_tuple))
 
     transition_score = entity_vector.similarity(state_t_word_tuple[1], state_t_plus_word_tuple[1])  # type: float
@@ -134,7 +134,7 @@ def make_state_transition_sequence(seq_wiki_article_name:List[WikipediaArticleOb
     return (state2index_obj, seq_edge_group, transition_matrix)
 
 
-def filter_out_of_vocabulary_word(wikipedia_article_obj: WikipediaArticleObject, vocabulary_words:set)->Union[bool, WikipediaArticleObject]:
+def filter_out_of_vocabulary_word(wikipedia_article_obj: WikipediaArticleObject, vocabulary_words:Set)->Union[bool, WikipediaArticleObject]:
     """* What you can do
     - You remove out-of-vocabulary word from wikipedia_article_obj.candidate_article_name
     """
@@ -173,7 +173,7 @@ def make_lattice_object(seq_wiki_article_name:List[WikipediaArticleObject],
         state2index=persistent_state2index,
         index2state={})
 
-    vocabulary_words = set(entity_vector_model.vocab.keys())
+    vocabulary_words = set(entity_vector_model.wv.vocab.keys())
     seq_wiki_article_name = [
         wiki_article_name
         for wiki_article_name in seq_wiki_article_name
