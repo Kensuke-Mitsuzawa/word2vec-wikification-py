@@ -1,5 +1,12 @@
+#! -*- coding: utf-8 -*-
+# gensim
+try:
+    from gensim.models import Word2Vec, KeyedVectors
+except ImportError:
+    # for gensim older version
+    from gensim.models import Word2Vec
+# matrix object
 from numpy import ndarray
-from gensim.models import Word2Vec
 from word2vec_wikification_py import init_logger
 from word2vec_wikification_py.models import WikipediaArticleObject, PersistentDict, LatticeObject, IndexDictionaryObject, EdgeObject
 from typing import List, Tuple, Union, Any, Dict, Set
@@ -37,10 +44,10 @@ def __update_index_dictionary(key:Tuple[int,str], index_dictionary:Dict[Tuple[in
         return index_dictionary
 
 
-def make_state_transition_edge(state_t_word_tuple:Tuple[int,str],
-                               state_t_plus_word_tuple:Tuple[int,str],
-                               state2index_obj:IndexDictionaryObject,
-                               entity_vector:Word2Vec)->Tuple[TransitionEdgeObject, IndexDictionaryObject]:
+def make_state_transition_edge(state_t_word_tuple,
+                               state_t_plus_word_tuple,
+                               state2index_obj,
+                               entity_vector):
     """* What you can do
     - tの単語xからt+1の単語x'への遷移スコアを計算する
 
@@ -48,10 +55,19 @@ def make_state_transition_edge(state_t_word_tuple:Tuple[int,str],
     - tuple object whose element is (transition_element, row2index, column2index)
     - transition_element is (row_index, column_index, transition_score)
     """
-    if not state_t_word_tuple[1] in entity_vector.wv.vocab:
-        raise Exception('Element does not exist in entity_voctor model. element={}'.format(state_t_word_tuple))
-    if not state_t_plus_word_tuple[1] in entity_vector.wv.vocab:
-        raise Exception('Element does not exist in entity_voctor model. element={}'.format(state_t_plus_word_tuple))
+    # type: (Tuple[int,str],Tuple[int,str],IndexDictionaryObject,Union[Word2Vec,KeyedVectors])->Tuple[TransitionEdgeObject, IndexDictionaryObject]
+    if isinstance(entity_vector, Word2Vec):
+        if not state_t_word_tuple[1] in entity_vector.wv.vocab:
+            raise Exception('Element does not exist in entity_voctor model. element={}'.format(state_t_word_tuple))
+        if not state_t_plus_word_tuple[1] in entity_vector.wv.vocab:
+            raise Exception('Element does not exist in entity_voctor model. element={}'.format(state_t_plus_word_tuple))
+    elif isinstance(entity_vector, KeyedVectors):
+        if not state_t_word_tuple[1] in entity_vector.vocab:
+            raise Exception('Element does not exist in entity_voctor model. element={}'.format(state_t_word_tuple))
+        if not state_t_plus_word_tuple[1] in entity_vector.vocab:
+            raise Exception('Element does not exist in entity_voctor model. element={}'.format(state_t_plus_word_tuple))
+    else:
+        raise Exception()
 
     transition_score = entity_vector.similarity(state_t_word_tuple[1], state_t_plus_word_tuple[1])  # type: float
 
@@ -152,13 +168,14 @@ def filter_out_of_vocabulary_word(wikipedia_article_obj: WikipediaArticleObject,
         return wikipedia_article_obj
 
 
-def make_lattice_object(seq_wiki_article_name:List[WikipediaArticleObject],
-                        entity_vector_model:Word2Vec,
-                        path_wordking_dir:str=None,
-                        is_use_cache:bool=True)->LatticeObject:
+def make_lattice_object(seq_wiki_article_name,
+                        entity_vector_model,
+                        path_wordking_dir=None,
+                        is_use_cache=True):
     """* What you can do
 
     """
+    # type: (List[WikipediaArticleObject],Union[Word2Vec,KeyedVectors],str,bool)->LatticeObject
     if path_wordking_dir is None: path_wordking_dir = mkdtemp()
     if is_use_cache:
         persistent_state2index = PersistentDict(os.path.join(path_wordking_dir, 'column2index.json'), flag='c', format='json')
@@ -173,7 +190,13 @@ def make_lattice_object(seq_wiki_article_name:List[WikipediaArticleObject],
         state2index=persistent_state2index,
         index2state={})
 
-    vocabulary_words = set(entity_vector_model.wv.vocab.keys())
+    if isinstance(entity_vector_model, Word2Vec):
+        vocabulary_words = set(entity_vector_model.wv.vocab.keys())
+    elif isinstance(entity_vector_model, KeyedVectors):
+        vocabulary_words = set(entity_vector_model.vocab.keys())
+    else:
+        raise Exception()
+
     seq_wiki_article_name = [
         wiki_article_name
         for wiki_article_name in seq_wiki_article_name
