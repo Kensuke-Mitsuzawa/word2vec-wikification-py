@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 name='word2vec_wikification_py'
-version='0.15'
+version='0.17'
 description='A package to run wikification'
 author='Kensuke Mitsuzawa'
 author_email='kensuke.mit@gmail.com'
@@ -12,7 +12,6 @@ license_name='MIT'
 
 install_requires = [
     'gensim',
-    'mysqlclient',
     'pymysql',
     'typing'
 ]

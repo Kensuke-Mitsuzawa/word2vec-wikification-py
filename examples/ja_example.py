@@ -17,9 +17,9 @@ path_model_file = '../bin/entity_vector/entity_vector.model.bin'
 dict_type = 'neologd'
 path_mecab_config = '/usr/local/bin/'
 pos_condition = [('名詞', )]
-mysql_username = ''
+mysql_username = 'your-mysql-user-name-here'
 mysql_hostname = 'localhost'
-mysql_password = ''
+mysql_password = 'your-mysql-password-here'
 mysql_db_name = 'wikipedia'
 # ------------------------------------------------------------
 entity_linking_model = load_entity_model(path_model_file)
