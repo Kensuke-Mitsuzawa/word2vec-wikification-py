@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
-from gensim.models import Word2Vec
+try:
+    from gensim.models import KeyedVectors
+    from gensim.models import Word2Vec
+except ImportError:
+    from gensim.models import Word2Vec
 from word2vec_wikification_py.models import WikipediaArticleObject, LatticeObject, SequenceScore
 from word2vec_wikification_py.make_lattice import make_lattice_object
 from word2vec_wikification_py.load_entity_model import load_entity_model
 from word2vec_wikification_py import search_wiki_pages
-from typing import List
+from typing import List, Any, Union
 from functools import partial
 
 
@@ -16,14 +20,14 @@ def add_article_symbol(input_str:str)->str:
     return '[{}]'.format(input_str)
 
 
-def predict_japanese_wiki_names_with_wikidump(input_tokens: List[str],
+def predict_japanese_wiki_names_with_wikidump(input_tokens,
                                               wikipedia_db_connector,
-                                              entity_vector_model: Word2Vec,
-                                              is_use_cache: bool = True,
-                                              is_sort_object: bool = True,
-                                              page_table_name: str = 'page',
-                                              page_table_redirect: str = 'redirect',
-                                              search_method: str = 'complete') -> List[SequenceScore]:
+                                              entity_vector_model,
+                                              is_use_cache=True,
+                                              is_sort_object=True,
+                                              page_table_name='page',
+                                              page_table_redirect='redirect',
+                                              search_method='complete') -> List[SequenceScore]:
     """* What you can do
     - You can run "Wikification" over your tokenized text
 
@@ -39,6 +43,7 @@ def predict_japanese_wiki_names_with_wikidump(input_tokens: List[str],
         - partial: It tries to find wikipedia article name by concatenating tokens
         - complete: It trusts the result of tokenizer.
     """
+    # type: (List[str],Any,Union[Word2Vec,KeyedVectors],bool,bool,str,str,str)->List[SequenceScore]
     if search_method=='partial':
         search_function = partial(search_wiki_pages.search_function_from_wikipedia_database,
                                   wikipedia_db_connector=wikipedia_db_connector,
@@ -75,10 +80,10 @@ def predict_japanese_wiki_names_with_wikidump(input_tokens: List[str],
         raise Exception('There is no search method named {}'.format(search_method))
 
 
-def compute_wiki_node_probability(seq_wiki_article_name: List[WikipediaArticleObject],
-                                  entity_vector_model: Word2Vec,
-                                  is_use_cache: bool=True,
-                                  is_sort_object: bool=True)->List[SequenceScore]:
+def compute_wiki_node_probability(seq_wiki_article_name,
+                                  entity_vector_model,
+                                  is_use_cache=True,
+                                  is_sort_object=True):
     """* What you can do
     - You can get sequence of wikipedia-article-names with its sequence-score
 
@@ -89,6 +94,8 @@ def compute_wiki_node_probability(seq_wiki_article_name: List[WikipediaArticleOb
     * Caution
     - You must proper wikipedia-article-name on WikipediaArticleObject.candidate_article_name attribute
     """
+    # type: (List[WikipediaArticleObject],Union[Word2Vec,KeyedVectors],bool,bool)->List[SequenceScore]
+
     # step1 it constructs array of transition-matrix(from state-t until state-t+1)
     lattice_object = make_lattice_object(
         seq_wiki_article_name=seq_wiki_article_name,
